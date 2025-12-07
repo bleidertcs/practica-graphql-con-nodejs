@@ -60,7 +60,6 @@ Repositorio de ejemplo y práctica para una charla de GraphQL con Node.js — ar
 1. Instalar dependencias:
 
 ```pwsh
-# en C:\\Users\\bleid\\Desktop\\practica
 npm install
 ```
 
