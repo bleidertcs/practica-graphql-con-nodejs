@@ -1,0 +1,62 @@
+# Dependencies
+/node_modules
+
+# Environment variables
+.env
+
+# Databases
+/base-datos/db-data
+
+# Logs
+logs
+#*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Build and test output
+/dist
+/build
+/coverage
+.scannerwork/
+.sonartmp/
+junit.xml
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+*.orig
+
+# Miscellaneous
+*.seed
+*.pid
+*.pid.lock
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+rush
+*lock.json
