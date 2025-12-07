@@ -60,3 +60,6 @@ yarn.lock
 pnpm-lock.yaml
 rush
 *lock.json
+
+logos*
+diapositivas
