@@ -1,192 +1,174 @@
-# GraphQL and REST API with Node.js
+# GraphQL con Node.js
 
-This project provides a demonstration of a GraphQL and REST API built with Node.js, Express, Knex.js, and Apollo Server. It includes examples of data loading with DataLoader to solve the N+1 problem.
+Repositorio de ejemplo y práctica para una charla de GraphQL con Node.js.
 
-## Setup
+Este proyecto incluye:
 
-### Prerequisites
+- Un servidor Express + Apollo Server (GraphQL).
+- Endpoints REST de ejemplo.
+- Ejemplos de mappers, DTOs, servicios y validación con `zod`.
+- Docker Compose para levantar la base de datos (MariaDB) durante la práctica.
 
-*   Node.js (LTS recommended)
-*   npm (comes with Node.js)
-*   MySQL Server
+## Requisitos
 
-### Installation
+- Docker y Docker Compose (para la base de datos y/o pruebas locales en contenedores).
+- Node.js 18+ (el proyecto fue probado con Node 20).
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository_url>
-    cd demostracion-charla-graphql-nodejs
-    ```
+## Preparación rápida (modo desarrollo)
 
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
+1. Instalar dependencias (desde la carpeta del repo):
 
-3.  **Database Configuration:**
-    Create a `.env` file in the project root with your MySQL connection details:
-    ```
-    DB_HOST=localhost
-    DB_USER=your_mysql_user
-    DB_PASS=your_mysql_password
-    DB_NAME=your_database_name
-    ```
+# 🌐 GraphQL con Node.js
 
-4.  **Run Migrations:**
-    ```bash
-    npx knex migrate:latest --knexfile src/knexfile.ts
-    ```
-
-5.  **Seed the Database:**
-    ```bash
-    npm run seed
-    ```
-
-## Running the Application
-
-### Development Mode
-
-To start the application in development mode with hot-reloading:
-```bash
-npm run dev
-```
-The server will be running at `http://localhost:3001`.
-
-### Production Mode
-
-To build and start the application in production mode:
-```bash
-npm run build
-npm start
-```
-The server will be running at `http://localhost:3001`.
-
-## Running Tests
-
-To run the test suite:
-```bash
-npm test
-```
-
-## API Endpoints
-
-The application exposes both GraphQL and REST API endpoints.
-
-### GraphQL API
-
-The GraphQL endpoint is available at `http://localhost:3001/graphql`.
-
-#### Example Queries with `curl`
-
-**1. Fetch a list of authors:**
-```bash
-curl -X POST \
-  http://localhost:3001/graphql \
-  -H 'Content-Type: application/json' \
-  -d 
-    "query": "{ authors(limit: 2) { list { id first_name last_name } count } }"
-```
-
-**2. Fetch a specific author by ID:**
-```bash
-curl -X POST \
-  http://localhost:3001/graphql \
-  -H 'Content-Type: application/json' \
-  -d 
-    "query": "{ authors(id: 1) { list { id first_name last_name } } }"
-```
-
-**3. Fetch authors with their posts (demonstrates DataLoader):**
-```bash
-curl -X POST \
-  http://localhost:3001/graphql \
-  -H 'Content-Type: application/json' \
-  -d 
-    "query": "{ authors(limit: 2) { list { id first_name last_name posts { id title } } } }"
-```
-
-**4. Fetch a list of posts:**
-```bash
-curl -X POST \
-  http://localhost:3001/graphql \
-  -H 'Content-Type: application/json' \
-  -d 
-    "query": "{ posts(limit: 2) { list { id title } count } }"
-```
-
-**5. Fetch a specific post by ID:**
-```bash
-curl -X POST \
-  http://localhost:3001/graphql \
-  -H 'Content-Type: application/json' \
-  -d 
-    "query": "{ posts(id: 1) { list { id title } } }"
-```
-
-**6. Fetch posts with their author (demonstrates DataLoader):**
-```bash
-curl -X POST \
-  http://localhost:3001/graphql \
-  -H 'Content-Type: application/json' \
-  -d 
-    "query": "{ posts(limit: 2) { list { id title author { id first_name last_name } } } }"
-```
-
-### REST API
-
-The REST API base URL is `http://localhost:3001/rest`.
-
-#### Example Queries with `curl`
+Repositorio de ejemplo y práctica para una charla de GraphQL con Node.js — arquitectura por capas, TypeScript y pruebas.
 
 ---
 
-### GraphQL Playground / Apollo Studio
-GraphQL APIs are self-documenting through introspection. You can explore the API schema and execute queries using tools like GraphQL Playground or Apollo Studio, which are accessible at the GraphQL endpoint:
-`http://localhost:3001/graphql`
+## ✨ Resumen rápido
 
-#### Example Queries with `curl`
+- 🚀 Propósito: aprender a construir una API con Express + Apollo Server (GraphQL) en TypeScript.
+- 🎯 Enfoque: separación de responsabilidades (controllers → services → mappers/DTOs → data access), validación con `zod` y manejo centralizado de errores.
 
-**1. Get all authors:**
-```bash
-curl http://localhost:3001/rest/authors
+---
+
+## 🧭 Contenido (TOC)
+
+- [GraphQL con Node.js](#graphql-con-nodejs)
+  - [Requisitos](#requisitos)
+  - [Preparación rápida (modo desarrollo)](#preparación-rápida-modo-desarrollo)
+- [🌐 GraphQL con Node.js](#-graphql-con-nodejs)
+  - [✨ Resumen rápido](#-resumen-rápido)
+  - [🧭 Contenido (TOC)](#-contenido-toc)
+  - [🛠️ Requisitos](#️-requisitos)
+  - [⚡ Instalación rápida](#-instalación-rápida)
+  - [📁 Estructura del proyecto (resumen)](#-estructura-del-proyecto-resumen)
+  - [🔎 Explicación de archivos clave (más detalle)](#-explicación-de-archivos-clave-más-detalle)
+  - [🧪 Tests](#-tests)
+  - [🐳 Docker \& Base de datos](#-docker--base-de-datos)
+
+---
+
+## 🛠️ Requisitos
+
+- Docker & Docker Compose (para la BD si quieres correrla en contenedor).
+- Node.js 18+ (probado en Node 20).
+
+---
+
+## ⚡ Instalación rápida
+
+1. Instalar dependencias:
+
+```pwsh
+# en C:\\Users\\bleid\\Desktop\\practica
+npm install
 ```
 
-**2. Get author by ID:**
-```bash
-curl http://localhost:3001/rest/authors/1
+2. Crear `.env` con credenciales de BD (ejemplo):
+
+```ini
+DB_USER=usuario
+DB_PASS=secr3t
+DB_NAME=graphql_nodejs
+DB_HOST=mariadb-graphql-nodejs
+DB_PORT=3306
 ```
 
-**3. Get authors count:**
-```bash
-curl http://localhost:3001/rest/authors-count
+3. (Opcional) Levantar la base de datos con Docker Compose:
+
+```pwsh
+docker compose up -d --build
 ```
 
-**4. Get all posts:**
-```bash
-curl http://localhost:3001/rest/posts
+4. Ejecutar en modo desarrollo:
+
+```pwsh
+npm run dev
 ```
 
-**5. Get post by ID:**
-```bash
-curl http://localhost:3001/rest/posts/1
+El servidor arranca en `http://localhost:3001` por defecto.
+
+---
+
+## 📁 Estructura del proyecto (resumen)
+
+- `source/` — código TypeScript principal.
+  - `index.ts` — bootstrap (Express + Apollo + pool BD + middlewares).
+  - `schema.ts` — typeDefs GraphQL.
+  - `resolvers.ts` — resolvers GraphQL (delegan a services).
+  - `common.ts` — consultas SQL (acceso a BD).
+  - `controllers/` — endpoints REST.
+  - `services/` — lógica de negocio y composición de resultados.
+  - `mappers/` — transformaciones fila BD → DTO.
+  - `dto/` — interfaces/Tipos (Author, Post, QueryArgs, etc.).
+  - `middleware/` — validaciones y error handler.
+  - `validators/` — esquemas `zod` reutilizables.
+  - `errors/` — errores HTTP y utilidades.
+  - `plugins/` — plugins de Apollo (p. ej. para mapear HttpError a extensions.httpStatus).
+
+---
+
+## 🔎 Explicación de archivos clave (más detalle)
+
+- `index.ts`:
+
+  - Inicializa la pool de BD (`promise-mysql`) y el servidor Express.
+  - Registra `express.json()` y CORS.
+  - Monta Apollo Server y las rutas REST.
+  - Registra `errorHandler` global para respuestas uniformes.
+
+- `common.ts`:
+
+  - Contiene las consultas SQL parametrizadas (filtrado, orden, paginación).
+  - Devuelve filas que luego se pasan a los mappers.
+
+- `services/*.service.ts`:
+
+  - Interfazan con `common.ts` y aplican reglas de negocio.
+  - Ejemplo: `getPosts({ limit, offset })` devuelve `PostDto[]` y metadata (count).
+
+- `controllers/*.controller.ts`:
+
+  - Traducen `req` a llamadas a `services` y devuelven `res.status().json()`.
+
+- `mappers/*.mapper.ts`:
+
+  - Convierten columnas SQL (snake_case) a propiedades camelCase y formatean fechas.
+
+- `validators/query-validator.ts` (zod):
+
+  - Define `QueryArgs` y exporta validadores para REST y GraphQL.
+
+- `middleware/error-handler.ts`:
+
+  - Intercepta errores, detecta `HttpError` y responde con JSON uniforme: `{ status, message, details? }`.
+
+- `plugins/apollo-error-plugin.ts`:
+  - Añade `extensions.httpStatus` a errores GraphQL que nacen de `HttpError` para facilitar integración con clientes.
+
+---
+
+## 🧪 Tests
+
+- Ejecutar pruebas unitarias:
+
+```pwsh
+npm test
 ```
 
-**6. Get posts count:**
-```bash
-curl http://localhost:3001/rest/posts-count
-```
+- Notas importantes:
+  - Para mantener estabilidad con Jest, `tsconfig.test.json` usa `module: CommonJS` (ts-jest limita soporte ESM).
+  - Estrategia práctica: código fuente en ESM/NodeNext, tests en CommonJS.
 
-**7. Get posts by author ID:**
-```bash
-curl http://localhost:3001/rest/posts-by-author/1
-```
+---
 
-**8. Get posts by author ID (list only):**
-```bash
-curl http://localhost:3001/rest/posts-by-author-list/1
-```
+## 🐳 Docker & Base de datos
 
-**9. Get posts by author ID (count):**
-```bash
-curl http://localhost:3001/rest/posts-by-author-count/1
+- `docker-compose.yml` levanta MariaDB y mapea `base-datos/db-data`.
+- `base-datos/` contiene datos y scripts de ejemplo para inicializar la BD.
+
+Ejemplo para levantar la BD:
+
+```pwsh
+docker compose up -d
 ```
