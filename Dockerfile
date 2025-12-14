@@ -7,7 +7,7 @@ COPY package*.json ./
 FROM base AS dependencies
 RUN npm config set registry https://registry.npmjs.org/
 RUN npm install --production
-COPY . .
+
 
 # ---- Build ----
 FROM base AS build
