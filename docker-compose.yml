@@ -9,9 +9,12 @@ services:
       - demo-graphql-nodejs
     env_file:
       - .env
+    environment:
+      - NODE_ENV=production
     depends_on:
-      - db
-    command: npm run start
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
   db:
     image: yobasystems/alpine-mariadb
@@ -25,8 +28,16 @@ services:
       MYSQL_PASSWORD: secr3t
     volumes:
       - ./base-datos/db-data:/var/lib/mysql
+      - ./base-datos/init:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
 networks:
   demo-graphql-nodejs:

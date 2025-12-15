@@ -1,173 +1,414 @@
-# GraphQL con Node.js
+# 🚀 GraphQL + Express + Clean Architecture
 
-Repositorio de ejemplo y práctica para una charla de GraphQL con Node.js.
+API GraphQL y REST con Node.js, Express, Apollo Server, MariaDB y Docker, implementando **Clean Architecture**.
 
-Este proyecto incluye:
-
-- Un servidor Express + Apollo Server (GraphQL).
-- Endpoints REST de ejemplo.
-- Ejemplos de mappers, DTOs, servicios y validación con `zod`.
-- Docker Compose para levantar la base de datos (MariaDB) durante la práctica.
-
-## Requisitos
-
-- Docker y Docker Compose (para la base de datos y/o pruebas locales en contenedores).
-- Node.js 18+ (el proyecto fue probado con Node 20).
-
-## Preparación rápida (modo desarrollo)
-
-1. Instalar dependencias (desde la carpeta del repo):
-
-# 🌐 GraphQL con Node.js
-
-Repositorio de ejemplo y práctica para una charla de GraphQL con Node.js — arquitectura por capas, TypeScript y pruebas.
+[![Node.js](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
+[![GraphQL](https://img.shields.io/badge/GraphQL-16.x-E10098)](https://graphql.org/)
+[![Tests](https://img.shields.io/badge/Tests-27%20passing-success)](./jest.config.mjs)
 
 ---
 
-## ✨ Resumen rápido
+## 📋 Tabla de Contenidos
 
-- 🚀 Propósito: aprender a construir una API con Express + Apollo Server (GraphQL) en TypeScript.
-- 🎯 Enfoque: separación de responsabilidades (controllers → services → mappers/DTOs → data access), validación con `zod` y manejo centralizado de errores.
-
----
-
-## 🧭 Contenido (TOC)
-
-- [GraphQL con Node.js](#graphql-con-nodejs)
-  - [Requisitos](#requisitos)
-  - [Preparación rápida (modo desarrollo)](#preparación-rápida-modo-desarrollo)
-- [🌐 GraphQL con Node.js](#-graphql-con-nodejs)
-  - [✨ Resumen rápido](#-resumen-rápido)
-  - [🧭 Contenido (TOC)](#-contenido-toc)
-  - [🛠️ Requisitos](#️-requisitos)
-  - [⚡ Instalación rápida](#-instalación-rápida)
-  - [📁 Estructura del proyecto (resumen)](#-estructura-del-proyecto-resumen)
-  - [🔎 Explicación de archivos clave (más detalle)](#-explicación-de-archivos-clave-más-detalle)
-  - [🧪 Tests](#-tests)
-  - [🐳 Docker \& Base de datos](#-docker--base-de-datos)
+- [Características](#-características)
+- [Arquitectura](#-arquitectura)
+- [Requisitos](#-requisitos)
+- [Instalación](#-instalación)
+- [API Reference](#-api-reference)
+- [Autenticación](#-autenticación)
+- [Validación](#-validación)
+- [Tests](#-tests)
+- [Docker](#-docker)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [Documentación Adicional](#-documentación-adicional)
 
 ---
 
-## 🛠️ Requisitos
+## ✨ Características
 
-- Docker & Docker Compose (para la BD si quieres correrla en contenedor).
-- Node.js 18+ (probado en Node 20).
+| Feature                  | Descripción                                                        |
+| ------------------------ | ------------------------------------------------------------------ |
+| **GraphQL**              | Apollo Server 5 con queries y mutations CRUD                       |
+| **REST API**             | Endpoints paralelos para authors y posts                           |
+| **Clean Architecture**   | 4 capas separadas (Domain, Application, Infrastructure, Container) |
+| **TypeScript**           | Tipado estático completo                                           |
+| **Dependency Injection** | Container propio sin librerías externas                            |
+| **DataLoaders**          | Optimización de N+1 queries                                        |
+| **JWT Auth**             | Autenticación con jsonwebtoken y bcrypt                            |
+| **Zod Validation**       | Validación de inputs                                               |
+| **Docker**               | Multi-stage build con healthchecks                                 |
+| **Tests**                | 27+ tests unitarios y de integración                               |
 
 ---
 
-## ⚡ Instalación rápida
+## 🏗 Arquitectura
 
-1. Instalar dependencias:
-
-```pwsh
-npm install
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Infrastructure Layer                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │   GraphQL   │  │    REST     │  │     Database        │  │
+│  │  Resolvers  │  │ Controllers │  │   Repositories      │  │
+│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘  │
+└─────────┼────────────────┼────────────────────┼─────────────┘
+          │                │                    │
+┌─────────┴────────────────┴────────────────────┘─────────────┐
+│                    Application Layer                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │  Use Cases  │  │  Validators │  │   DTOs + Mappers    │  │
+│  └──────┬──────┘  └─────────────┘  └─────────────────────┘  │
+└─────────┼───────────────────────────────────────────────────┘
+          │
+┌─────────┴───────────────────────────────────────────────────┐
+│                      Domain Layer                            │
+│  ┌─────────────┐  ┌─────────────────────┐  ┌─────────────┐  │
+│  │  Entities   │  │ Repository Interfaces│  │   Errors    │  │
+│  └─────────────┘  └─────────────────────┘  └─────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-2. Crear `.env` con credenciales de BD (ejemplo):
+---
 
-```ini
-DB_USER=usuario
-DB_PASS=secr3t
-DB_NAME=graphql_nodejs
-DB_HOST=mariadb-graphql-nodejs
-DB_PORT=3306
-```
+## 🛠 Requisitos
 
-3. (Opcional) Levantar la base de datos con Docker Compose:
-
-```pwsh
-docker compose up -d --build
-```
-
-4. Ejecutar en modo desarrollo:
-
-```pwsh
-npm run dev
-```
-
-El servidor arranca en `http://localhost:3001` por defecto.
+- **Node.js** 18+ (recomendado 20)
+- **pnpm** (gestor de paquetes)
+- **Docker** y **Docker Compose**
 
 ---
 
-## 📁 Estructura del proyecto (resumen)
+## ⚡ Instalación
 
-- `source/` — código TypeScript principal.
-  - `index.ts` — bootstrap (Express + Apollo + pool BD + middlewares).
-  - `schema.ts` — typeDefs GraphQL.
-  - `resolvers.ts` — resolvers GraphQL (delegan a services).
-  - `common.ts` — consultas SQL (acceso a BD).
-  - `controllers/` — endpoints REST.
-  - `services/` — lógica de negocio y composición de resultados.
-  - `mappers/` — transformaciones fila BD → DTO.
-  - `dto/` — interfaces/Tipos (Author, Post, QueryArgs, etc.).
-  - `middleware/` — validaciones y error handler.
-  - `validators/` — esquemas `zod` reutilizables.
-  - `errors/` — errores HTTP y utilidades.
-  - `plugins/` — plugins de Apollo (p. ej. para mapear HttpError a extensions.httpStatus).
+```bash
+# Clonar
+git clone https://github.com/tu-usuario/practica-graphql-con-nodejs.git
+cd practica-graphql-con-nodejs
+
+# Dependencias
+pnpm install
+
+# Variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales
+
+# Iniciar con Docker
+docker-compose up --build -d
+```
+
+El servidor estará en `http://localhost:3001`
 
 ---
 
-## 🔎 Explicación de archivos clave (más detalle)
+## 📖 API Reference
 
-- `index.ts`:
+### GraphQL Endpoint
 
-  - Inicializa la pool de BD (`promise-mysql`) y el servidor Express.
-  - Registra `express.json()` y CORS.
-  - Monta Apollo Server y las rutas REST.
-  - Registra `errorHandler` global para respuestas uniformes.
+**URL**: `POST http://localhost:3001/graphql`
 
-- `common.ts`:
+#### Queries
 
-  - Contiene las consultas SQL parametrizadas (filtrado, orden, paginación).
-  - Devuelve filas que luego se pasan a los mappers.
+```graphql
+# Listar autores
+query {
+  authors(limit: 10, offset: 0) {
+    list {
+      id
+      first_name
+      last_name
+      email
+      posts {
+        title
+      }
+    }
+    count
+  }
+}
 
-- `services/*.service.ts`:
+# Listar posts
+query {
+  posts(limit: 5) {
+    list {
+      id
+      title
+      description
+      author {
+        first_name
+      }
+    }
+    count
+  }
+}
+```
 
-  - Interfazan con `common.ts` y aplican reglas de negocio.
-  - Ejemplo: `getPosts({ limit, offset })` devuelve `PostDto[]` y metadata (count).
+#### Mutations
 
-- `controllers/*.controller.ts`:
+```graphql
+# Crear autor
+mutation {
+  createAuthor(
+    input: {
+      first_name: "John"
+      last_name: "Doe"
+      email: "john@example.com"
+      birthdate: "1990-01-15"
+    }
+  ) {
+    id
+    first_name
+    email
+  }
+}
 
-  - Traducen `req` a llamadas a `services` y devuelven `res.status().json()`.
+# Actualizar autor
+mutation {
+  updateAuthor(id: 1, input: { first_name: "Jane" }) {
+    id
+    first_name
+  }
+}
 
-- `mappers/*.mapper.ts`:
+# Eliminar autor
+mutation {
+  deleteAuthor(id: 1)
+}
 
-  - Convierten columnas SQL (snake_case) a propiedades camelCase y formatean fechas.
+# Crear post
+mutation {
+  createPost(
+    input: {
+      title: "Mi Post"
+      author_id: 1
+      description: "Descripción"
+      content: "Contenido completo"
+    }
+  ) {
+    id
+    title
+  }
+}
 
-- `validators/query-validator.ts` (zod):
+# Actualizar post
+mutation {
+  updatePost(id: 1, input: { title: "Nuevo Título" }) {
+    id
+    title
+  }
+}
 
-  - Define `QueryArgs` y exporta validadores para REST y GraphQL.
+# Eliminar post
+mutation {
+  deletePost(id: 1)
+}
+```
 
-- `middleware/error-handler.ts`:
+### REST Endpoints
 
-  - Intercepta errores, detecta `HttpError` y responde con JSON uniforme: `{ status, message, details? }`.
+| Método | Endpoint                    | Descripción             |
+| ------ | --------------------------- | ----------------------- |
+| GET    | `/rest/authors`             | Lista autores con count |
+| GET    | `/rest/authors/:id`         | Autor por ID            |
+| GET    | `/rest/posts`               | Lista posts con count   |
+| GET    | `/rest/posts/:id`           | Post por ID             |
+| GET    | `/rest/posts-by-author/:id` | Posts de un autor       |
 
-- `plugins/apollo-error-plugin.ts`:
-  - Añade `extensions.httpStatus` a errores GraphQL que nacen de `HttpError` para facilitar integración con clientes.
+**Parámetros query**: `limit` (default: 20), `offset` (default: 0)
+
+---
+
+## 🔐 Autenticación
+
+El proyecto incluye autenticación JWT completa.
+
+### Configuración
+
+```env
+JWT_SECRET=tu-secreto-super-seguro
+JWT_EXPIRES_IN=24h
+```
+
+### Crear tabla de usuarios
+
+```bash
+# Desarrollo local
+npx knex migrate:latest --knexfile knexfile.ts
+
+# Docker (usa archivos .mjs)
+docker-compose exec app npx knex migrate:up 20231208000000_create_users_table.mjs --knexfile knexfile.mjs
+```
+
+### Mutations GraphQL
+
+```graphql
+# Registrar usuario
+mutation {
+  register(
+    input: {
+      username: "john_doe"
+      email: "john@example.com"
+      password: "mySecurePassword123"
+    }
+  ) {
+    user {
+      id
+      username
+      email
+    }
+    accessToken
+  }
+}
+
+# Iniciar sesión
+mutation {
+  login(input: { email: "john@example.com", password: "mySecurePassword123" }) {
+    user {
+      id
+      username
+      email
+    }
+    accessToken
+  }
+}
+```
+
+### Uso del Token
+
+```bash
+# En las siguientes requests, usar el header:
+Authorization: Bearer <accessToken>
+```
+
+### Middleware para proteger rutas
+
+```typescript
+import { authMiddleware } from "./infrastructure/http/middleware/index.js";
+
+// Proteger ruta REST
+app.use("/api/protected", authMiddleware, protectedRouter);
+```
+
+Ver [MIGRATIONS.md](./MIGRATIONS.md) para más detalles.
+
+---
+
+## ✅ Validación
+
+Validación de inputs con Zod.
+
+### Schemas disponibles
+
+| Schema               | Ubicación                                    |
+| -------------------- | -------------------------------------------- |
+| `createAuthorSchema` | `application/validators/author.validator.ts` |
+| `updateAuthorSchema` | `application/validators/author.validator.ts` |
+| `createPostSchema`   | `application/validators/post.validator.ts`   |
+| `updatePostSchema`   | `application/validators/post.validator.ts`   |
+| `queryArgsSchema`    | `application/validators/query.validator.ts`  |
+
+### Ejemplo
+
+```typescript
+import { createAuthorSchema } from "./application/validators/index.js";
+
+const input = createAuthorSchema.parse(data);
+// Lanza ZodError si es inválido
+```
 
 ---
 
 ## 🧪 Tests
 
-- Ejecutar pruebas unitarias:
-
-```pwsh
-npm test
+```bash
+pnpm test
 ```
 
-- Notas importantes:
-  - Para mantener estabilidad con Jest, `tsconfig.test.json` usa `module: CommonJS` (ts-jest limita soporte ESM).
-  - Estrategia práctica: código fuente en ESM/NodeNext, tests en CommonJS.
+| Suite                      | Tests | Descripción             |
+| -------------------------- | ----- | ----------------------- |
+| `graphql.test.ts`          | 4     | Integración GraphQL     |
+| `authors.use-case.test.ts` | 5     | Use cases de autores    |
+| `posts.use-case.test.ts`   | 6     | Use cases de posts      |
+| `mappers.test.ts`          | 7     | Conversión Entity → DTO |
+| `domain-errors.test.ts`    | 4     | Errores de dominio      |
+
+**Total: 27 tests**
 
 ---
 
-## 🐳 Docker & Base de datos
+## 🐳 Docker
 
-- `docker-compose.yml` levanta MariaDB y mapea `base-datos/db-data`.
-- `base-datos/` contiene datos y scripts de ejemplo para inicializar la BD.
+```bash
+# Iniciar
+docker-compose up -d --build
 
-Ejemplo para levantar la BD:
+# Ver logs
+docker-compose logs -f app
 
-```pwsh
-docker compose up -d
+# Reset BD (elimina datos)
+docker-compose down -v && docker-compose up --build -d
+
+# Ejecutar migraciones
+docker-compose exec app npx knex migrate:latest --knexfile knexfile.ts
 ```
+
+| Servicio | Puerto | Descripción        |
+| -------- | ------ | ------------------ |
+| `app`    | 3001   | API GraphQL + REST |
+| `db`     | 3306   | MariaDB            |
+
+---
+
+## 📁 Estructura del Proyecto
+
+```
+src/
+├── domain/                    # Capa de Dominio (sin dependencias)
+│   ├── entities/              # Author, Post, User
+│   ├── repositories/          # Interfaces de repositorios
+│   └── errors/                # DomainError, EntityNotFoundError
+│
+├── application/               # Capa de Aplicación
+│   ├── dto/                   # Data Transfer Objects
+│   ├── mappers/               # Entity → DTO
+│   ├── validators/            # Zod schemas
+│   ├── services/              # Auth service (JWT, bcrypt)
+│   └── use-cases/
+│       ├── authors/           # CRUD Authors (6 use cases)
+│       ├── posts/             # CRUD Posts (7 use cases)
+│       └── auth/              # Register, Login
+│
+├── infrastructure/            # Capa de Infraestructura
+│   ├── database/
+│   │   ├── knex-client.ts     # Configuración Knex
+│   │   └── repositories/      # Implementaciones Knex
+│   └── http/
+│       ├── graphql/           # Schema, Resolvers, DataLoaders
+│       ├── rest/              # Controllers, Routes
+│       └── middleware/        # AsyncHandler, ErrorHandler, Auth
+│
+├── container/                 # Dependency Injection
+└── index.ts                   # Entry point
+```
+
+---
+
+## 📚 Documentación Adicional
+
+- [**ARCHITECTURE.md**](./ARCHITECTURE.md) - Explicación detallada de Clean Architecture
+- [**MIGRATIONS.md**](./MIGRATIONS.md) - Guía de migraciones con Knex
+
+---
+
+## 🔧 Scripts
+
+| Script       | Descripción               |
+| ------------ | ------------------------- |
+| `pnpm dev`   | Desarrollo con hot reload |
+| `pnpm build` | Compilar TypeScript       |
+| `pnpm start` | Iniciar producción        |
+| `pnpm test`  | Ejecutar tests            |
+
+---
+
+## 📄 Licencia
+
+ISC

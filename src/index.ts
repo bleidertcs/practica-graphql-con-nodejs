@@ -1,94 +1,109 @@
 import 'dotenv/config';
 import http from 'http';
-import logger from './utils/logger.js';
-import knex, { Knex } from 'knex';
-import knexConfig from './knexfile.js';
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
-// Use Express built-in JSON parser (no body-parser dependency)
 
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { createApolloErrorPlugin } from './plugins/apollo-error-plugin.js';
 
-import typeDefs from './schema.js';
-import * as resolvers from './resolvers.js';
-import { QueryArgs } from './dto/query-args.js';
-import { createDataLoaders } from './services/data-loaders.service.js';
-import restMiddleware from './rest-middleware.js';
-import errorHandler from './middleware/error-handler.js';
+import { getContainer } from './container/index.js';
+import { 
+  typeDefs, 
+  createResolvers, 
+  createDataLoaders, 
+  createApolloErrorPlugin,
+  type GraphQLContext 
+} from './infrastructure/http/graphql/index.js';
+import { createRestRouter } from './infrastructure/http/rest/index.js';
+import { errorHandler } from './infrastructure/http/middleware/index.js';
+import logger from './shared/utils/logger.js';
 
-const log = logger;
-const app = express();
-const httpServer = http.createServer(app);
+/**
+ * Bootstrap the application
+ */
+async function bootstrap() {
+  // Initialize container (dependency injection)
+  const container = getContainer();
+  logger.info('Container initialized');
 
-// Extend the Request interface to include the 'db' property
-declare global {
-  namespace Express {
-    interface Request {
-      db: Knex;
-    }
-  }
-}
+  // Create Express app and HTTP server
+  const app = express();
+  const httpServer = http.createServer(app);
 
-// Conexión a la base de datos
-log.info('Intentando conectar a la BD...');
-const db: Knex = knex(knexConfig);
-log.info('Conexión a la BD exitosa!');
+  // Create Apollo Server
+  const server = new ApolloServer<GraphQLContext>({
+    typeDefs,
+    resolvers: createResolvers(),
+    plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+      createApolloErrorPlugin(),
+    ],
+  });
 
-interface MyContext {
-  db: Knex;
-  dataLoaders: ReturnType<typeof createDataLoaders>;
-}
+  await server.start();
+  logger.info('Apollo Server started');
 
-// Configuración del servidor Apollo
-const server = new ApolloServer<MyContext>({
-  typeDefs,
-  resolvers: {
-    Query: {
-      authors: async (_: unknown, args: QueryArgs, { db }: { db: Knex }) => await resolvers.Authors(args, db),
-      posts: async (_: unknown, args: QueryArgs, { db }: { db: Knex }) => await resolvers.Posts(args, db),
-    },
-    Post: resolvers.Post,
-    Author: resolvers.Author,
-  },
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), createApolloErrorPlugin()],
-});
-
-await server.start();
-
-// Inyectar la conexión a la BD en `req`
-app.use((req: Request, _: Response, next: NextFunction) => {
-  req.db = db;
-  next();
-});
-
-// Endpoint de GraphQL
-app.use(
-  '/graphql',
-  cors<cors.CorsRequest>(),
-  express.json(),
-  expressMiddleware(server, {
-    context: async ({ req }: { req: Request }) => ({
-      db: req.db,
-      dataLoaders: createDataLoaders(req.db),
+  // GraphQL endpoint
+  app.use(
+    '/graphql',
+    cors<cors.CorsRequest>(),
+    express.json(),
+    expressMiddleware(server, {
+      context: async () => ({
+        db: container.db,
+        dataLoaders: createDataLoaders(container.db),
+        useCases: {
+          // Queries
+          listAuthors: container.listAuthorsUseCase,
+          listPosts: container.listPostsUseCase,
+          // Mutations - Authors
+          createAuthor: container.createAuthorUseCase,
+          updateAuthor: container.updateAuthorUseCase,
+          deleteAuthor: container.deleteAuthorUseCase,
+          // Mutations - Posts
+          createPost: container.createPostUseCase,
+          updatePost: container.updatePostUseCase,
+          deletePost: container.deletePostUseCase,
+          // Auth
+          register: container.registerUseCase,
+          login: container.loginUseCase,
+        },
+      }),
     }),
-  }),
-);
+  );
 
-// Endpoint REST
-app.use('/rest', restMiddleware);
+  // REST endpoints
+  app.use(
+    '/rest',
+    cors(),
+    express.json(),
+    createRestRouter(container.authorController, container.postController)
+  );
 
-// Global error handler (after routes)
-app.use(errorHandler);
+  // Root endpoint
+  app.get('/', (_req: Request, res: Response) => {
+    res.status(200).json({ 
+      message: 'GraphQL + REST API with Clean Architecture',
+      graphql: '/graphql',
+      rest: '/rest',
+    });
+  });
 
-// Ruta raíz
-app.get('/', (req: Request, res: Response) => {
-  log.debug('¿Tenemos el objeto db? =>', !!req.db);
-  res.status(200).end('¡Hola mundo!');
+  // Global error handler (must be last)
+  app.use(errorHandler);
+
+  // Start server
+  const PORT = process.env.PORT || 3001;
+  await new Promise<void>((resolve) => httpServer.listen({ port: PORT }, resolve));
+  
+  logger.info(`🚀 Server running at http://localhost:${PORT}`);
+  logger.info(`   GraphQL: http://localhost:${PORT}/graphql`);
+  logger.info(`   REST:    http://localhost:${PORT}/rest`);
+}
+
+// Run the application
+bootstrap().catch((error) => {
+  logger.error('Failed to start server:', error);
+  process.exit(1);
 });
-
-// Iniciar el servidor
-await new Promise<void>((resolve) => httpServer.listen({ port: 3001 }, resolve));
-console.log('🚀 El servidor está corriendo en http://localhost:3001');
